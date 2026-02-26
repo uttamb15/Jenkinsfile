@@ -1,93 +1,60 @@
-// Declarative Jenkins Pipeline
 pipeline {
-
-    // Run this pipeline on any available Jenkins agent (node)
     agent any
 
-    // Automatically install and configure required tools
+    // Use NodeJS configured in Jenkins (Manage Jenkins → Global Tool Configuration)
     tools {
-        // Uses the NodeJS tool configured in:
-        // Manage Jenkins → Global Tool Configuration
         nodejs 'NodeJS'
     }
 
-    // Global environment variables accessible in all stages
     environment {
-        // GitHub repository URL
-        REPO_URL = 'https://github.com/uttamb15/ts-to-js-demo.git'
-
-        // Target branch to checkout and push changes
+        REPO_URL    = 'https://github.com/uttamb15/ts-to-js-demo.git'
         BRANCH_NAME = 'main'
+        LOCAL_OUTPUT_DIR = 'D:\\ts-js-output'
     }
 
-    // Define pipeline stages
     stages {
 
-        // Stage 1: Clone source code from GitHub
         stage('Checkout Code') {
             steps {
-                // Clone specific branch using Jenkins stored credentials
+                // Pull latest code from GitHub
                 git branch: "${BRANCH_NAME}",
-                    credentialsId: 'github_credentials',  // Jenkins credential ID
-                    url: "${REPO_URL}"                     // Repository URL
+                    credentialsId: 'github_credentials',
+                    url: "${REPO_URL}"
             }
         }
 
-        // Stage 2: Install npm dependencies
         stage('Install Dependencies') {
             steps {
-                // 'bat' is used because this is running on a Windows agent
-                // For Linux agents, use 'sh'
+                // Install npm dependencies from package.json
                 bat 'npm install'
             }
         }
 
-        // Stage 3: Compile TypeScript files into JavaScript
         stage('Compile TypeScript') {
             steps {
-                // Runs the TypeScript compiler
-                // It generates JS files (usually inside dist/ as per tsconfig.json)
+                // Compile TypeScript → JavaScript (uses tsconfig.json)
                 bat 'npx tsc'
             }
         }
 
-        // Stage 4: Commit generated JS files and push to GitHub
-        stage('Commit & Push JS') {
+        stage('Store JS Locally') {
             steps {
+                bat """
+                    REM Create local output directory if it does not exist
+                    if not exist "%LOCAL_OUTPUT_DIR%" (
+                        mkdir "%LOCAL_OUTPUT_DIR%"
+                    )
 
-                // Securely retrieve GitHub credentials from Jenkins
-                withCredentials([usernamePassword(
-                    credentialsId: 'github_credentials',
-                    usernameVariable: 'GIT_USER',   // Injected username variable
-                    passwordVariable: 'GIT_PASS'    // Injected password/token variable
-                )]) {
+                    REM Copy compiled JS files to local system
+                    copy /Y dist\\*.js "%LOCAL_OUTPUT_DIR%\\"
+                """
+            }
+        }
 
-                    // Execute multiple Git commands inside Windows shell
-                    // Set Git identity for automated commits
-
-                    // Add compiled JavaScript files to staging area
-                    // Commit changes
-                    // echo No changes prevents failure if nothing changed
-                    //Push changes back to the same branch using credentials
-                    // Credentials are passed securely via environment variables
-                    bat """
-                    
-                        git config user.email "uttamsbaba10@gmail.com"
-                        git config user.name "uttamb15"
-
-                        
-                        git pull origin %BRANCH_NAME% --rebase
-                        
-                        git add dist/
-
-                        
-                        git commit -m "Auto-generated JS from TypeScript" || echo No changes
-
-                        
-                       
-                        git push https://%GIT_USER%:%GIT_PASS%@github.com/uttamb15/ts-to-js-demo.git ${BRANCH_NAME}
-                    """
-                }
+        stage('Archive JS Artifacts') {
+            steps {
+                // Store JS files inside Jenkins for this build
+                archiveArtifacts artifacts: 'dist/**/*.js', fingerprint: true
             }
         }
     }
