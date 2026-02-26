@@ -64,19 +64,19 @@ pipeline {
 
                     // Execute multiple Git commands inside Windows shell
                     bat """
-                        // Set Git identity for automated commits
+                     Set Git identity for automated commits
                         git config user.email "uttamsbaba10@gmail.com"
                         git config user.name "uttamb15"
 
-                        // Add compiled JavaScript files to staging area
+                         Add compiled JavaScript files to staging area
                         git add dist/
 
-                        // Commit changes
-                                               // || echo No changes prevents failure if nothing changed
+                         Commit changes
+                                               echo No changes prevents failure if nothing changed
                         git commit -m "Auto-generated JS from TypeScript" || echo No changes
 
-                        // Push changes back to the same branch using credentials
-                        // Credentials are passed securely via environment variables
+                        Push changes back to the same branch using credentials
+                        Credentials are passed securely via environment variables
                         git push https://%GIT_USER%:%GIT_PASS%@github.com/uttamb15/ts-to-js-demo.git ${BRANCH_NAME}
                     """
                 }
