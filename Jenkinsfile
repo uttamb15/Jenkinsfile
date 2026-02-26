@@ -68,6 +68,8 @@ pipeline {
                         git config user.email "uttamsbaba10@gmail.com"
                         git config user.name "uttamb15"
 
+                        
+                        git pull origin %BRANCH_NAME% --rebase
                          Add compiled JavaScript files to staging area
                         git add dist/
 
