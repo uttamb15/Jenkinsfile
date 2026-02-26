@@ -9,7 +9,7 @@ pipeline {
     environment {
         REPO_URL    = 'https://github.com/uttamb15/ts-to-js-demo.git'
         BRANCH_NAME = 'main'
-        LOCAL_OUTPUT_DIR = 'D:\\ts-js-output'
+        LOCAL_OUTPUT_DIR = 'C:\\ts-js-output'
     }
 
     stages {
